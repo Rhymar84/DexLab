@@ -29,6 +29,7 @@ export const blankFilters = () => ({
   matchups: [],
   includeAbilities: true,
 });
+const MATCHUP_LABELS = { weak: "Weak to", resist: "Resists", immune: "Immune to", strong: "Strong against" };
 export function Explorer({
   pool,
   types,
@@ -158,6 +159,7 @@ export function Explorer({
           <option value="weak">Weak to</option>
           <option value="resist">Resists</option>
           <option value="immune">Immune to</option>
+          <option value="strong">Strong against</option>
         </select>
         <div className="inline-control">
           <select
@@ -199,11 +201,7 @@ export function Explorer({
               update({ matchups: filters.matchups.filter((_, j) => i !== j) })
             }
           >
-            {f.mode === "weak"
-              ? "Weak to"
-              : f.mode === "resist"
-                ? "Resists"
-                : "Immune to"}{" "}
+            {MATCHUP_LABELS[f.mode]}{" "}
             {f.type}
             <X size={12} />
           </button>
@@ -220,7 +218,7 @@ export function Explorer({
           {filters.includeAbilities !== false
             ? "Matches one available ability across all matchup filters. A selected ability must match."
             : "Based on typing only."}
-          {" "}Immunities are separate from resistances. Held items and battle modifiers are excluded.
+          {" "}Resists includes immunities. Strong against matches your Pokémon’s own types against a single defending type, regardless of moves or abilities. Held items and battle modifiers are excluded.
         </p>
       </div>
       <div className="filter-foot">
@@ -318,7 +316,7 @@ export function Explorer({
                   })
                 }
               >
-                {f.mode}: {f.type}
+                {MATCHUP_LABELS[f.mode]}: {f.type}
                 <X size={12} />
               </button>
             ))}

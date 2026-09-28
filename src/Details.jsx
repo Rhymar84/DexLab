@@ -120,7 +120,7 @@ export function Details({
                       <i
                         style={{
                           width: `${Math.min(100, (p.stats[k] / 255) * 100)}%`,
-                          background: k === "spe" ? "#a99af5" : "#c6f36b",
+                          background: k === "spe" ? "var(--accent)" : "var(--lime)",
                         }}
                       />
                     </div>

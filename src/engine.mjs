@@ -95,9 +95,12 @@ export function matchupAbilities(pokemon, chart, filters) {
       : [...new Set(pokemon.abilities)];
   // A single available ability must satisfy every matchup; never combine abilities.
   return abilities.filter((ability) => (filters.matchups || []).every((f) => {
+    if (f.mode === "strong") {
+      return pokemon.types.some((type) => (chart[type]?.[f.type] ?? 1) > 1);
+    }
     const n = effectiveness(f.type, pokemon, chart, ability);
     return f.mode === "weak" ? n > 1
-      : f.mode === "resist" ? n > 0 && n < 1
+      : f.mode === "resist" ? n < 1
       : n === 0;
   }));
 }

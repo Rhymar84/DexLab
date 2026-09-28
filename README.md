@@ -24,14 +24,16 @@ Vite uses relative asset URLs, so both repository Pages (`username.github.io/rep
 ## Features
 
 - National Dex, Champions VGC Regulation M-C, and archived Regulation M-B pools.
-- Search by name or Pokédex number; combine two required types, an ability, multiple learned moves, and multiple defensive type conditions.
+- Search by name or Pokédex number; combine two required types, an ability, multiple learned moves, and multiple type conditions. Resists includes immunities; Strong against matches a Pokémon's own types against a single defending type (for example, Grass or Electric against Water). Defensive filters can account for one available ability, with cautions for ability-dependent results.
 - All seven stat columns and Name sort descending first, then ascending. Types and Abilities headings open filters.
 - Pokémon details, base stats, ability descriptions, all 18 defensive matchups, and on-demand competitive usage.
 - Multiple locally saved teams with six slots; nickname, item, ability, nature, level, gender, shiny, EVs/IVs or Champions stat points, Tera type, and happiness.
 - Species-specific move picker with type/category filters, name/power/accuracy sorting, and stackable Spread, Sound, Sharpness, Sheer Force, Speed Control, and Priority filters.
+- Speed Control includes turn-order moves and guaranteed Speed/paralysis effects on a successful hit, subject to target eligibility. Chance-based effects such as Thunderbolt's paralysis are excluded.
 - Showdown text import, clipboard export, and `.txt` download. Imports validate before replacing team members.
 - Team profile with calculated speed, an 18-type defensive matrix, and potential offensive threats.
 - Responsive layout, keyboard-searchable option lists, native modal focus handling, reduced-motion support, and source attribution.
+- Top-bar theme selector: Classic, Daylight (light mode), Violet, and Ocean. Theme preferences are saved locally in the browser, independently of teams.
 
 ## Game data and updates
 

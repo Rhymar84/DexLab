@@ -1,0 +1,111 @@
+/* Semantic overrides. Classic uses the original colour fallbacks in styles.css. */
+:root[data-theme="daylight"] {
+  color-scheme: light;
+  --ui-canvas: #eef2f7;
+  --ui-surface: #ffffff;
+  --ui-raised: #f5f7fb;
+  --ui-elevated: #e4eaf3;
+  --ui-border: #c8d2e0;
+  --ui-border-strong: #9eafc5;
+  --ui-muted: #52617a;
+  --ui-secondary: #40526c;
+  --ui-text: #21334e;
+  --ui-heading: #14243c;
+  --ui-accent: #326623;
+  --ui-accent-hover: #28541b;
+  --ui-accent-ink: #ffffff;
+  --ui-soft: #446c37;
+  --ui-success-bg: #e1efda;
+  --ui-purple: #6545a4;
+  --ui-purple-bg: #eee7fa;
+  --ui-warning: #805000;
+  --ui-warning-bg: #fff0d4;
+  --ui-danger: #a33245;
+  --ui-danger-bg: #f8e1e5;
+}
+:root[data-theme="violet"] {
+  color-scheme: dark;
+  --ui-canvas: #15111e;
+  --ui-surface: #1c1728;
+  --ui-raised: #251e34;
+  --ui-elevated: #302740;
+  --ui-border: #42354f;
+  --ui-border-strong: #615074;
+  --ui-muted: #a798b7;
+  --ui-secondary: #bfb0d0;
+  --ui-text: #e0d6ec;
+  --ui-heading: #f6efff;
+  --ui-accent: #d3abff;
+  --ui-accent-hover: #e5ceff;
+  --ui-accent-ink: #291438;
+  --ui-soft: #c2a6d5;
+  --ui-success-bg: #30243e;
+  --ui-purple: #f2a7d7;
+  --ui-purple-bg: #392239;
+  --ui-warning: #f0c180;
+  --ui-warning-bg: #403225;
+  --ui-danger: #ffa7b7;
+  --ui-danger-bg: #482334;
+}
+:root[data-theme="ocean"] {
+  color-scheme: dark;
+  --ui-canvas: #09191f;
+  --ui-surface: #10242b;
+  --ui-raised: #17303a;
+  --ui-elevated: #1c3c47;
+  --ui-border: #2b4b56;
+  --ui-border-strong: #476975;
+  --ui-muted: #8cabb4;
+  --ui-secondary: #a5c3cb;
+  --ui-text: #cee5e8;
+  --ui-heading: #ecfaff;
+  --ui-accent: #72dec9;
+  --ui-accent-hover: #adf7e8;
+  --ui-accent-ink: #092c2a;
+  --ui-soft: #97c7b9;
+  --ui-success-bg: #173c39;
+  --ui-purple: #a2bafa;
+  --ui-purple-bg: #23364a;
+  --ui-warning: #efc885;
+  --ui-warning-bg: #3c3525;
+  --ui-danger: #f7a39a;
+  --ui-danger-bg: #442d32;
+}
+:root[data-theme] {
+  --text: var(--ui-text, #e8eaf0);
+}
+:root[data-theme="daylight"] .type-badge {
+  color: color-mix(in srgb, var(--type) 45%, #172640);
+}
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+}
+.theme-picker select {
+  margin: 0;
+  width: 112px;
+  padding: 8px 22px 8px 9px;
+  font-size: 0.8125rem;
+}
+@media (min-width: 761px) and (max-width: 1250px) {
+  .app-header { gap: 20px; padding-inline: 22px; }
+  .main-nav { gap: 16px; }
+  .header-right { gap: 8px; }
+  .my-teams span { display: none; }
+}
+@media (max-width: 760px) {
+  .header-right { gap: 6px; }
+  .theme-picker { gap: 0; }
+  .theme-picker > svg { display: none; }
+  .theme-picker select { width: 94px; font-size: 0.75rem; }
+  .my-teams span { display: none; }
+}
+@media (max-width: 480px) {
+  .brand small { display: none; }
+}
+@media (max-width: 380px) {
+  .app-header { padding-inline: 10px; }
+  .header-right .my-teams { padding-inline: 7px; }
+}

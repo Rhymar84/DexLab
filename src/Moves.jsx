@@ -45,7 +45,7 @@ export function Moves({
     Sound: "Sound-based moves.",
     Sharpness: "Slicing moves boosted by Sharpness.",
     "Sheer Force": "Damaging moves with a removable secondary effect.",
-    "Speed Control": "Changes Speed, causes paralysis, or changes turn order.",
+    "Speed Control": "Changes turn order, or guarantees a Speed change or paralysis if it lands and the target is eligible. Excludes chance-based secondary effects.",
     Priority: "Moves with a positive priority bracket.",
   };
   return (

@@ -118,7 +118,7 @@ test("Type effectiveness handles dual typing, resistance, immunity and passive a
     1,
   );
   assert.ok(
-    !filterPokemon(pool, {
+    filterPokemon(pool, {
       matchups: [{ mode: "resist", type: "Electric" }],
     }).some((p) => p.id === "garchomp"),
   );
@@ -134,6 +134,28 @@ test("Explorer includes ability immunities by default and supports typing-only s
   const typeOnly = filterPokemon(pool, { ...filters, includeAbilities: false });
   assert.ok(!typeOnly.some((p) => p.id === "rotom"));
   assert.ok(typeOnly.some((p) => p.id === "charizard"));
+});
+test("Resistance filters include type and ability immunities", () => {
+  const filters = { matchups: [{ mode: "resist", type: "Ground" }] };
+  const results = filterPokemon(pool, filters);
+  for (const id of ["charizard", "rotom", "delphoxmega", "rillaboom"])
+    assert.ok(results.some((p) => p.id === id), id);
+  assert.ok(!results.some((p) => p.id === "pikachu"));
+  const typeOnly = filterPokemon(pool, { ...filters, includeAbilities: false });
+  assert.ok(typeOnly.some((p) => p.id === "charizard"));
+  assert.ok(!typeOnly.some((p) => p.id === "rotom"));
+  assert.match(matchupAbilityWarning(mon("bronzong", national), national.chart, filters), /Levitate/);
+});
+test("Strong against uses own offensive types and stacks with defensive filters", () => {
+  const filters = { matchups: [{ mode: "strong", type: "Water" }] };
+  const expected = pool.pokemon.filter((p) => p.types.includes("Grass") || p.types.includes("Electric"));
+  assert.deepEqual(filterPokemon(pool, filters), expected);
+  assert.deepEqual(filterPokemon(pool, { ...filters, includeAbilities: false }), expected);
+  assert.ok(!filterPokemon(pool, filters).some((p) => p.id === "charizard"));
+  const combined = filterPokemon(pool, { matchups: [...filters.matchups, { mode: "immune", type: "Ground" }] });
+  assert.ok(combined.some((p) => p.id === "rotom"));
+  assert.ok(!combined.some((p) => p.id === "pikachu"));
+  assert.equal(matchupAbilityWarning(mon("bronzong", national), national.chart, { matchups: [{mode: "strong", type: "Fairy"}] }), "");
 });
 test("Explorer ability cautions identify conditional immunity without flagging natural immunity", () => {
   const filters = { matchups: [{ mode: "immune", type: "Ground" }] };
@@ -172,6 +194,16 @@ test("Move flags reflect actual mechanics and combine by intersection", () => {
     }).some((x) => x.id === "icywind"),
   );
   assert.ok(m.fakeout.description?.length > 10);
+});
+test("Speed Control excludes chance-based effects and keeps guaranteed effects on hit", () => {
+  for (const p of Object.values(data.pools)) {
+    for (const id of ["thunderbolt", "thunder", "discharge", "bubblebeam", "bulldoze", "icywind", "thunderwave", "zapcannon", "nuzzle", "electroweb", "trailblaze", "flamecharge", "trickroom", "tailwind", "ancientpower", "triattack", "direclaw", "secretpower"]) {
+      const move = p.moves[id];
+      if (!move) continue;
+      const excluded = ["thunderbolt", "thunder", "discharge", "bubblebeam", "ancientpower", "triattack", "direclaw", "secretpower"].includes(id);
+      assert.equal(move.tags.includes("Speed Control"), !excluded, `${p.id || "pool"}: ${id}`);
+    }
+  }
 });
 test("Champions points and National Dex EVs calculate correct speed and HP", () => {
   const p = mon("garchomp");

@@ -160,13 +160,10 @@ for (const config of configurations) {
                 "grasspledge",
                 "electrify",
                 "instruct",
-                "triattack",
-                "direclaw",
-                "secretpower",
               ].includes(m.id) ||
               speedEffect(m) ||
               speedEffect(m.self) ||
-              secondary.some(speedEffect)
+              secondary.some((effect) => effect.chance === 100 && speedEffect(effect))
                 ? "Speed Control"
                 : "",
               m.priority > 0 ? "Priority" : "",

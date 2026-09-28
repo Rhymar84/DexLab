@@ -17,9 +17,11 @@ import { Builder } from "./Builder.jsx";
 import { Profile } from "./Profile.jsx";
 import { Details } from "./Details.jsx";
 import { Moves } from "./Moves.jsx";
+import { ThemeSelector } from "./ThemeSelector.jsx";
 import { Modal, TeamTray, IconButton } from "./common.jsx";
 import { makeSet, STATS, filterPokemon } from "./engine.mjs";
 import "./styles.css";
+import "./themes.css";
 
 const STORAGE = "dexlab-teams-v1";
 const newTeam = (format = "regmc", name = "Untitled team") => ({
@@ -221,7 +223,8 @@ function App({ data }) {
           ))}
         </nav>
         <div className="header-right">
-          <button className="button my-teams" onClick={() => setModal("teams")}>
+          <ThemeSelector />
+          <button className="button my-teams" aria-label={`My teams ${teams.length}`} onClick={() => setModal("teams")}>
             <Users size={16} />
             <span>My teams</span>
             <small>{teams.length}</small>
