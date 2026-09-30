@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Search, Check } from "lucide-react";
 import { filterMoves, TAGS } from "./engine.mjs";
 import { Empty, Modal, TypeBadge } from "./common.jsx";
@@ -10,7 +10,9 @@ export function Moves({
   onSelect,
   selectedMoves = [],
   slot = -1,
+  onSlotChange,
 }) {
+  const search = useRef();
   const [filters, setFilters] = useState({
     query: "",
     type: "",
@@ -35,6 +37,13 @@ export function Moves({
     [pokemon, pool, filters, sort],
   );
   const update = (patch) => setFilters((f) => ({ ...f, ...patch }));
+  const usedElsewhere = (id) => selectedMoves.some((m, i) => m === id && i !== slot);
+  function select(id) {
+    if (!onSelect || (id && usedElsewhere(id))) return;
+    onSelect(id);
+    update({ query: "" });
+    search.current?.focus();
+  }
   const order = (key) =>
     setSort((s) => ({
       key,
@@ -55,15 +64,35 @@ export function Moves({
       onClose={onClose}
       wide
     >
+      {onSelect && (
+        <section className="equipped-moves" aria-label="Equipped moves">
+          <p className="help">Choose a slot to replace · selections advance to the next slot.</p>
+          <div className="equipped-move-slots">
+            {Array.from({ length: 4 }, (_, i) => (
+              <button key={i} className={`button ${slot === i ? "primary" : ""}`}
+                aria-pressed={slot === i} onClick={() => onSlotChange(i)}>
+                <span>{i + 1}.</span> {pool.moves[selectedMoves[i]]?.name || "Empty slot"}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="move-controls">
         <div className="search-input">
           <Search size={17} />
           <input
+            ref={search}
             autoFocus
             aria-label="Search moves"
             placeholder="Search moves…"
             value={filters.query}
             onChange={(e) => update({ query: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing && !e.repeat && onSelect) {
+                e.preventDefault();
+                if (moves[0]) select(moves[0].id);
+              }
+            }}
           />
         </div>
         <select
@@ -159,7 +188,7 @@ export function Moves({
                     <button
                       className="move-name"
                       disabled={used || !onSelect}
-                      onClick={() => onSelect?.(m.id)}
+                      onClick={() => select(m.id)}
                     >
                       <strong>
                         {m.name}
@@ -192,10 +221,11 @@ export function Moves({
       </div>
       {onSelect && (
         <div className="modal-footer">
-          <button className="button" onClick={() => onSelect("")}>
+          <button className="button" onClick={() => select("")}>
             Clear this slot
           </button>
-          <span className="muted">Click a move to select it.</span>
+          <span className="muted">Click a move or press Enter for the top result.</span>
+          <button className="button primary" onClick={onClose}>Done</button>
         </div>
       )}
     </Modal>

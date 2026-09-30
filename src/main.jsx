@@ -20,10 +20,10 @@ import { Moves } from "./Moves.jsx";
 import { ThemeSelector } from "./ThemeSelector.jsx";
 import { Modal, TeamTray, IconButton } from "./common.jsx";
 import { makeSet, STATS, filterPokemon } from "./engine.mjs";
+import { STORAGE, LEGACY_STORAGE, migrateSavedTeams } from "./storage.mjs";
 import "./styles.css";
 import "./themes.css";
 
-const STORAGE = "dexlab-teams-v1";
 const newTeam = (format = "regmc", name = "Untitled team") => ({
   id: crypto.randomUUID(),
   name,
@@ -32,9 +32,9 @@ const newTeam = (format = "regmc", name = "Untitled team") => ({
 });
 function loadTeams() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE));
+    const parsed = JSON.parse(localStorage.getItem(STORAGE) || localStorage.getItem(LEGACY_STORAGE));
     if (
-      parsed?.version === 1 &&
+      [1, 2].includes(parsed?.version) &&
       parsed.teams?.length &&
       parsed.teams.every(
         (t) =>
@@ -56,12 +56,12 @@ function loadTeams() {
           ),
       )
     )
-      return parsed;
+      return migrateSavedTeams(parsed);
   } catch {
     /* Missing or malformed storage: start a fresh session. */
   }
   const team = newTeam();
-  return { version: 1, teams: [team], active: team.id };
+  return { version: 2, teams: [team], active: team.id };
 }
 function App({ data }) {
   const [saved] = useState(loadTeams),
@@ -76,8 +76,7 @@ function App({ data }) {
     [movePicker, setMovePicker] = useState(null),
     [modal, setModal] = useState(""),
     [toast, setToast] = useState(""),
-    [storageError, setStorageError] = useState(false),
-    [pendingFormat, setPendingFormat] = useState("");
+    [storageError, setStorageError] = useState(false);
   const [newName, setNewName] = useState(""),
     [deleteTeam, setDeleteTeam] = useState("");
   const toastTimer = useRef();
@@ -96,7 +95,7 @@ function App({ data }) {
     try {
       localStorage.setItem(
         STORAGE,
-        JSON.stringify({ version: 1, teams, active: team.id }),
+        JSON.stringify({ version: 2, teams, active: team.id }),
       );
       setStorageError(false);
     } catch {
@@ -123,30 +122,13 @@ function App({ data }) {
     notify(`${p.name} added to ${team.name}.`);
   }
   function changeFormat(id) {
-    if (
-      team.members.length &&
-      data.formats.find((f) => f.id === id).champion !== format.champion
-    ) {
-      setPendingFormat(id);
-      return;
-    }
-    applyFormat(id);
-  }
-  function applyFormat(id) {
-    const champion = data.formats.find((f) => f.id === id).champion;
-    const convert = champion !== format.champion;
     updateTeam((t) => ({
       ...t,
       format: id,
-      members: t.members.map((m) => ({
-        ...m,
-        level: champion ? 50 : m.level,
-        evs: convert ? Object.fromEntries(STATS.map((s) => [s, 0])) : m.evs,
-      })),
     }));
     setFilters(blankFilters());
     setDetail(null);
-    setPendingFormat("");
+    setMovePicker(null);
     if (team.members.length)
       notify("Format changed. Review the team checks for unavailable choices.");
   }
@@ -256,7 +238,7 @@ function App({ data }) {
               <span className="beta-label">
                 {view === "explore"
                   ? "ADVANCED SEARCH"
-                  : format.champion
+                  : !pool.unrestricted
                     ? "VGC DOUBLES"
                     : "NATIONAL DEX"}
               </span>
@@ -420,6 +402,7 @@ function App({ data }) {
           pool={pool}
           types={data.types}
           slot={movePicker.slot}
+          onSlotChange={(slot) => setMovePicker((picker) => ({ ...picker, slot }))}
           selectedMoves={
             team.members.find((m) => m.uid === movePicker.uid)?.moves
           }
@@ -440,7 +423,7 @@ function App({ data }) {
                         : m,
                     ),
                   }));
-                  setMovePicker(null);
+                  setMovePicker((picker) => ({ ...picker, slot: (picker.slot + 1) % 4 }));
                 }
               : undefined
           }
@@ -467,15 +450,6 @@ function App({ data }) {
                 <ExternalLink size={14} />
               </a>
             ))}
-            <a
-              className="source-link"
-              href="https://www.smogon.com/stats/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Smogon National Dex usage reports
-              <ExternalLink size={14} />
-            </a>
             <p className="help">
               Snapshot: {data.generatedAt.slice(0, 10)} · Showdown{" "}
               {data.sha.slice(0, 7)}. Pool entries include alternate and battle
@@ -490,8 +464,8 @@ function App({ data }) {
             </p>
             <p>
               Team edits save automatically in this browser. Export teams to
-              keep a portable backup. Champions uses 66 stat points; National
-              Dex uses EVs and IVs. Usage reports identify their sample and
+              keep a portable backup. Every format uses Champions stat points:
+              66 total, 32 per stat, at level 50. Usage reports identify their sample and
               source; missing data is never filled with examples.
             </p>
             <p>
@@ -609,25 +583,6 @@ function App({ data }) {
           </div>
         </Modal>
       )}
-      {pendingFormat && (
-        <Modal
-          title="Switch stat systems?"
-          subtitle="Champions uses stat points; National Dex uses EVs. Switching between them resets investment to zero, preserves the rest of the set, and sets Champions Pokémon to level 50."
-          onClose={() => setPendingFormat("")}
-        >
-          <div className="modal-footer">
-            <button className="button" onClick={() => setPendingFormat("")}>
-              Keep current format
-            </button>
-            <button
-              className="button primary"
-              onClick={() => applyFormat(pendingFormat)}
-            >
-              Switch & reset investment
-            </button>
-          </div>
-        </Modal>
-      )}
       {toast && (
         <div className="toast" role="status">
           <Check size={17} />
@@ -669,7 +624,7 @@ root.render(
     <p>Loading Pokémon and format data.</p>
   </div>,
 );
-fetch(`${import.meta.env.BASE_URL}data/dex.json`)
+fetch(`${import.meta.env.BASE_URL}data/dex.json?v=${__DEX_VERSION__}`)
   .then((r) => {
     if (!r.ok) throw new Error("Dataset could not be loaded");
     return r.json();

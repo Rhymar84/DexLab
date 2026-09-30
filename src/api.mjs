@@ -1,6 +1,47 @@
+import { toID } from "./engine.mjs";
+
 const cache = new Map();
 const pending = new Map();
 const API = "https://championsbattledata.com";
+
+export async function loadOverallUsage(format) {
+  const key = `overall:${format.id === "regmb" ? "regmb" : "current"}`;
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.time < 3600000) return cached.data;
+  if (pending.has(key)) return pending.get(key);
+  const work = (async () => {
+    const index = await getJSON(`${API}/data/meta/index.json`);
+    const snapshots = (index.seasons || []).flatMap(({ season, dates, formats }) =>
+      formats?.includes("Doubles") ? (dates || []).map((date) => {
+        const [day, month, year] = date.split("_");
+        return { season, date, iso: `${year}-${month}-${day}` };
+      }) : [],
+    ).filter(({ iso }) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && (
+      format.id !== "regmb" || (iso >= "2026-06-17" && iso < "2026-09-09")
+    )).sort((a, b) => b.iso.localeCompare(a.iso));
+    const selected = snapshots[0];
+    if (!selected) throw new Error("No overall doubles usage rankings are available for this format.");
+    const url = `${API}/data/meta/${encodeURIComponent(selected.season)}/${encodeURIComponent(selected.date)}/Doubles.json`;
+    const snapshot = await getJSON(url);
+    if (snapshot.format !== "Doubles" || snapshot.date !== selected.date || snapshot.season !== selected.season)
+      throw new Error("The provider returned a mismatched usage snapshot.");
+    const pokemon = Object.fromEntries(Object.entries(snapshot.pokemon || {})
+      .filter(([, entry]) => Number.isInteger(entry.position) && entry.position > 0)
+      .map(([name, entry]) => [toID(name), { rank: entry.position, name }]));
+    if (!Object.keys(pokemon).length) throw new Error("The provider returned no overall usage rankings.");
+    const result = {
+      pokemon,
+      label: `${format.id === "regmb" ? "Archived M-B" : "Champions"} doubles · ${selected.iso}`,
+      sourceUrl: `${API}/meta/`,
+      // position is the overall usage rank; category percentages describe sets.
+      note: "The provider publishes overall usage ranks, not overall usage percentages.",
+    };
+    cache.set(key, { time: Date.now(), data: result });
+    return result;
+  })();
+  pending.set(key, work);
+  try { return await work; } finally { pending.delete(key); }
+}
 async function getJSON(url) {
   const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!r.ok) {

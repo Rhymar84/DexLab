@@ -2,12 +2,14 @@ import React, { useMemo, useState } from "react";
 import { Shield, Gauge, Swords, Plus } from "lucide-react";
 import { calculateStats, effectiveness, threatsFor } from "./engine.mjs";
 import { PokemonImage, TypeBadge, Empty } from "./common.jsx";
+import { useOverallUsage } from "./OverallUsage.jsx";
 export function Profile({ team, pool, types, format, onExplore, onInspect }) {
   const [abilities, setAbilities] = useState(true);
+  const { data: usage, error: usageError, retry } = useOverallUsage(format);
   const members = team.members
     .map((s) => ({ set: s, p: pool.pokemon.find((p) => p.id === s.species) }))
     .filter((m) => m.p);
-  const threats = useMemo(() => threatsFor(team, pool), [team, pool]);
+  const threats = useMemo(() => threatsFor(team, pool, usage?.pokemon), [team, pool, usage]);
   const speeds = members
     .map((m) => ({
       ...m,
@@ -156,9 +158,14 @@ export function Profile({ team, pool, types, format, onExplore, onInspect }) {
             <Swords size={18} /> Potential threats
           </h3>
           <p className="help">
-            Ranked by super-effective STAB coverage against your team, then base
-            stats. This is a typing heuristic, not a damage calculation or a
-            usage ranking.
+            Ranked by number of team members hit by super-effective STAB, then
+            overall usage. Unranked Pokémon follow ranked ones; remaining ties
+            sort by name. This measures type coverage, not damage.
+          </p>
+          <p className="help">
+            {usage ? <>{usage.label} · <a href={usage.sourceUrl} target="_blank" rel="noreferrer">Pokémon Champions Battle Data</a>. {usage.note}</>
+              : usageError ? <>{usageError} Showing coverage and name order. <button className="text-button" onClick={retry}>Retry</button></>
+              : "Loading overall usage rankings…"}
           </p>
           {!threats.length && (
             <p className="muted">No super-effective STAB threats found.</p>
@@ -174,6 +181,7 @@ export function Profile({ team, pool, types, format, onExplore, onInspect }) {
               <div>
                 <strong>{t.p.name}</strong>
                 <span>{t.targets.join(", ")}</span>
+                {usage && <span>{t.usage ? `Usage #${t.usage.rank}${t.usage.startingForm ? ` · ${t.usage.startingForm} starting form` : ""}` : "Usage unranked"}</span>}
               </div>
               <span className="threat-count">
                 {t.weak}/{members.length}

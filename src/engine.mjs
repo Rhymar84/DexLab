@@ -193,7 +193,8 @@ export function calculateStats(p, set, pool, champion) {
 }
 export function validateTeam(team, pool, champion) {
   const issues = [];
-  if (champion && team.members.length !== 6)
+  const clauses = champion && !pool.unrestricted;
+  if (clauses && team.members.length !== 6)
     issues.push("VGC requires a full team of 6 Pokémon (choose 4 for battle).");
   const species = new Set(),
     items = new Set();
@@ -204,12 +205,12 @@ export function validateTeam(team, pool, champion) {
       issues.push(`${name} is not available in this format.`);
       continue;
     }
-    if (champion && species.has(p.baseSpecies))
+    if (clauses && species.has(p.baseSpecies))
       issues.push(`${name}: Species Clause — duplicate species.`);
     species.add(p.baseSpecies);
     if (s.item && !pool.items.some((i) => i.name === s.item))
       issues.push(`${name}: ${s.item} is not available in this format.`);
-    if (champion && s.item && items.has(s.item))
+    if (clauses && s.item && items.has(s.item))
       issues.push(`${name}: Item Clause — duplicate ${s.item}.`);
     if (s.item) items.add(s.item);
     if (!p.abilities.includes(s.ability))
@@ -366,7 +367,17 @@ export function importTeam(text, pool, champion) {
     return set;
   });
 }
-export function threatsFor(team, pool) {
+export function overallUsageFor(pokemon, usage = {}) {
+  if (usage[pokemon.id]) return usage[pokemon.id];
+  const startingForms = pokemon.battleOnly ? [pokemon.battleOnly].flat() : [];
+  if (startingForms.length === 1) {
+    const entry = usage[toID(startingForms[0])];
+    if (entry) return { ...entry, startingForm: startingForms[0] };
+  }
+  return null;
+}
+
+export function threatsFor(team, pool, usage = {}) {
   const members = team.members
     .map((s) => ({ set: s, p: pool.pokemon.find((p) => p.id === s.species) }))
     .filter((m) => m.p);
@@ -391,12 +402,14 @@ export function threatsFor(team, pool) {
       return {
         p,
         weak,
-        score: hits.reduce((a, x) => a + (x > 1 ? x : 0), 0),
+        usage: overallUsageFor(p, usage),
         targets: members.filter((m, i) => hits[i] > 1).map((m) => m.p.name),
       };
     })
     .filter((t) => t.weak)
-    .sort((a, b) => b.score - a.score || b.p.bst - a.p.bst)
+    .sort((a, b) => b.weak - a.weak ||
+      (a.usage?.rank ?? Infinity) - (b.usage?.rank ?? Infinity) ||
+      a.p.name.localeCompare(b.p.name))
     .filter(
       (t, i, all) =>
         all.findIndex((x) => x.p.baseSpecies === t.p.baseSpecies) === i,

@@ -76,9 +76,9 @@ const configurations = [
     name: "National Dex",
     mod: "gen9",
     description:
-      "All official Pokémon and historical items. Gen 9 mechanics, with transfer moves. An unrestricted research pool.",
-    usage: "smogon",
-    champion: false,
+      "All official Pokémon, historical items, and transfer moves with Champions stat points. Level 50 · 66 points total, 32 per stat. An unrestricted research pool.",
+    usage: "champions",
+    champion: true,
   },
   {
     id: "regmc",
@@ -111,7 +111,7 @@ const out = {
 };
 for (const config of configurations) {
   const dex = Dex.mod(config.mod);
-  const validator = config.champion ? new TeamValidator(config.format) : null;
+  const validator = config.format ? new TeamValidator(config.format) : null;
   const official = (x) =>
     x.exists &&
     !["CAP", "Custom", "LGPE", "Pokestar"].includes(x.isNonstandard);
@@ -121,7 +121,7 @@ for (const config of configurations) {
       .filter(
         (m) =>
           official(m) &&
-          (!config.champion ||
+          (!validator ||
             !validator.checkMove({ species: "", name: "" }, m, {})),
       )
       .map((m) => {
@@ -177,7 +177,7 @@ for (const config of configurations) {
     .filter(
       (i) =>
         official(i) &&
-        (!config.champion ||
+        (!validator ||
           !validator.checkItem({ species: "", name: "" }, i, {})),
     )
     .map((i) => ({
@@ -189,7 +189,7 @@ for (const config of configurations) {
     }));
   function obtainableSpecies(p, seen = new Set()) {
     if (!official(p) || p.num <= 0 || seen.has(p.id)) return false;
-    if (!config.champion) return true;
+    if (!validator) return true;
     if (validator.checkSpecies({ species: p.name, name: p.name }, p, p, {})) return false;
     if (p.requiredItem && !items.some(i => i.name === p.requiredItem)) return false;
     if (p.battleOnly) {
@@ -204,7 +204,7 @@ for (const config of configurations) {
     .map((p) => {
       let learnset = [];
       try {
-        learnset = [...dex.species.getMovePool(p.id, !config.champion)].filter(
+        learnset = [...dex.species.getMovePool(p.id, !validator)].filter(
           (id) => moves[id],
         );
       } catch {
@@ -236,6 +236,7 @@ for (const config of configurations) {
       };
     });
   out.pools[config.id] = {
+    unrestricted: !validator,
     pokemon,
     moves,
     items,

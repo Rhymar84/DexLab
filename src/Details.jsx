@@ -9,6 +9,7 @@ import {
 import { ItemImage, Modal, PokemonImage, TypeBadge } from "./common.jsx";
 import { LABELS, STATS, effectiveness, toID } from "./engine.mjs";
 import { loadUsage } from "./api.mjs";
+import { OverallUsage } from "./OverallUsage.jsx";
 export function Details({
   pokemon: p,
   pool,
@@ -106,6 +107,7 @@ export function Details({
       </div>
       {tab === "overview" ? (
         <div className="detail-content">
+          <OverallUsage pokemon={p} format={format} />
           <div className="detail-grid">
             <section className="panel">
               <h3>

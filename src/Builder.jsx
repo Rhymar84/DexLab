@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { OverallUsage } from "./OverallUsage.jsx";
 import {
   Plus,
   Trash2,
@@ -139,14 +140,14 @@ export function Builder({
               setIO("import");
             }}
           >
-            <Upload size={16} /> Import
+            <Download size={16} /> Import
           </button>
           <button
             className="button"
             disabled={!team.members.length}
             onClick={() => setIO("export")}
           >
-            <Download size={16} /> Export team
+            <Upload size={16} /> Export team
           </button>
         </div>
       </div>
@@ -430,6 +431,7 @@ export function Builder({
               <PokemonImage p={pokemon} large shiny={selected.shiny} />
             </section>
             <section className="panel set-stats">
+              <OverallUsage pokemon={pokemon} format={format} />
               <h3>
                 {format.champion ? "Stat points" : "EVs & IVs"}
                 <span className={total > limit ? "weak-text" : "muted"}>

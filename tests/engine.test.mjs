@@ -197,15 +197,15 @@ test("Move flags reflect actual mechanics and combine by intersection", () => {
 });
 test("Speed Control excludes chance-based effects and keeps guaranteed effects on hit", () => {
   for (const p of Object.values(data.pools)) {
-    for (const id of ["thunderbolt", "thunder", "discharge", "bubblebeam", "bulldoze", "icywind", "thunderwave", "zapcannon", "nuzzle", "electroweb", "trailblaze", "flamecharge", "trickroom", "tailwind", "ancientpower", "triattack", "direclaw", "secretpower"]) {
+    for (const id of ["bodyslam", "thunderbolt", "thunder", "discharge", "bubblebeam", "bulldoze", "icywind", "thunderwave", "zapcannon", "nuzzle", "electroweb", "trailblaze", "flamecharge", "trickroom", "tailwind", "ancientpower", "triattack", "direclaw", "secretpower"]) {
       const move = p.moves[id];
       if (!move) continue;
-      const excluded = ["thunderbolt", "thunder", "discharge", "bubblebeam", "ancientpower", "triattack", "direclaw", "secretpower"].includes(id);
+      const excluded = ["bodyslam", "thunderbolt", "thunder", "discharge", "bubblebeam", "ancientpower", "triattack", "direclaw", "secretpower"].includes(id);
       assert.equal(move.tags.includes("Speed Control"), !excluded, `${p.id || "pool"}: ${id}`);
     }
   }
 });
-test("Champions points and National Dex EVs calculate correct speed and HP", () => {
+test("Champions and unrestricted National Dex share point budgets and stat calculations", () => {
   const p = mon("garchomp");
   const s = {
     ...makeSet(p),
@@ -214,17 +214,15 @@ test("Champions points and National Dex EVs calculate correct speed and HP", () 
   };
   assert.equal(calculateStats(p, s, pool, true).spe, 169);
   assert.equal(calculateStats(p, s, pool, true).hp, 185);
-  const n = {
-    ...s,
-    evs: { hp: 4, atk: 252, def: 0, spa: 0, spd: 0, spe: 252 },
-  };
+  assert.equal(data.formats.find((f) => f.id === "national").champion, true);
+  assert.equal(national.unrestricted, true);
   assert.equal(
-    calculateStats(mon("garchomp", national), n, national, false).spe,
+    calculateStats(mon("garchomp", national), s, national, true).spe,
     169,
   );
   assert.equal(
-    calculateStats(mon("garchomp", national), n, national, false).hp,
-    184,
+    calculateStats(mon("garchomp", national), s, national, true).hp,
+    185,
   );
 });
 test("Showdown import/export preserves a full National Dex set", () => {
@@ -237,14 +235,11 @@ test("Showdown import/export preserves a full National Dex set", () => {
     nature: "Jolly",
     gender: "M",
     shiny: true,
-    teraType: "Steel",
-    happiness: 200,
-    evs: { hp: 4, atk: 252, def: 0, spa: 0, spd: 0, spe: 252 },
-    ivs: { hp: 31, atk: 31, def: 31, spa: 0, spd: 31, spe: 31 },
+    evs: { hp: 2, atk: 32, def: 0, spa: 0, spd: 0, spe: 32 },
     moves: ["earthquake", "dragonclaw", "protect", "swordsdance"],
   };
-  const text = exportTeam({ members: [s] }, national, false);
-  const imported = importTeam(text, national, false)[0];
+  const text = exportTeam({ members: [s] }, national, true);
+  const imported = importTeam(text, national, true)[0];
   const { uid, ...expected } = s;
   const { uid: ignored, ...actual } = imported;
   assert.deepEqual(actual, expected);
