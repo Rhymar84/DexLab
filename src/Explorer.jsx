@@ -406,7 +406,7 @@ export function Explorer({
                       <PokemonImage p={p} />
                       <span>
                         {p.name}
-                        {p.battleOnly && <small>Battle form</small>}
+                        {p.battleOnly && !/-Mega(?:-|$)/.test(p.name) && <small>Battle form</small>}
                       </span>
                     </button>
                     {abilityWarning && (

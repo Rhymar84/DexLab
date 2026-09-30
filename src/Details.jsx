@@ -70,7 +70,7 @@ export function Details({
         <div>
           <span className="eyebrow">
             NO. {String(p.num).padStart(3, "0")}{" "}
-            {p.battleOnly ? " · BATTLE FORM" : ""}
+            {p.battleOnly && !/-Mega(?:-|$)/.test(p.name) ? " · BATTLE FORM" : ""}
           </span>
           <h1>{p.name}</h1>
           <div className="type-pair">
@@ -172,7 +172,7 @@ export function Details({
           </div>
           {p.battleOnly && (
             <p className="notice">
-              This is a battle form.{" "}
+              {!/-Mega(?:-|$)/.test(p.name) && "This is a battle form. "}
               {p.requiredItem
                 ? `It requires ${p.requiredItem}.`
                 : `It transforms from ${Array.isArray(p.battleOnly) ? p.battleOnly.join(" / ") : p.battleOnly}.`}{" "}

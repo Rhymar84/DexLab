@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { OverallUsage } from "./OverallUsage.jsx";
 import {
   Plus,
   Trash2,
@@ -431,7 +430,6 @@ export function Builder({
               <PokemonImage p={pokemon} large shiny={selected.shiny} />
             </section>
             <section className="panel set-stats">
-              <OverallUsage pokemon={pokemon} format={format} />
               <h3>
                 {format.champion ? "Stat points" : "EVs & IVs"}
                 <span className={total > limit ? "weak-text" : "muted"}>
